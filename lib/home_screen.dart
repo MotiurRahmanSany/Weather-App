@@ -15,6 +15,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  IconData myIcon = Icons.toggle_on_outlined;
   // calling the openweathermap api...
   late Future<Map<String, dynamic>> weather = getCurrentWeather();
   Future<Map<String, dynamic>> getCurrentWeather() async {
@@ -31,7 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
       return data;
     } catch (e) {
-      throw e.toString();
+      throw 'e.toString()';
     }
   }
 
@@ -42,17 +43,19 @@ class _HomeScreenState extends State<HomeScreen> {
     weather = getCurrentWeather();
   }
 
-  void openMenu() {
-    
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          onPressed: openMenu,
-          icon: const Icon(Icons.menu),
+          onPressed: () {
+            setState(() {
+              myIcon = (myIcon == Icons.toggle_on_outlined
+                  ? Icons.toggle_off_outlined
+                  : Icons.toggle_on_outlined);
+            });
+          },
+          icon: Icon(myIcon),
         ),
         centerTitle: true,
         title: const Text(
@@ -116,7 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Column(
                             children: [
                               Text(
-                                '$currentTemp K',
+                                '$currentTemp °C',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 32,
