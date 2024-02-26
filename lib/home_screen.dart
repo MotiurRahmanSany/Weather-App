@@ -26,8 +26,11 @@ class _HomeScreenState extends State<HomeScreen> {
     borderRadius: BorderRadius.circular(10),
   );
   // ! my variables
+  String currentAPITempUnit = 'metric';
+  String currentTempUnit = '°C';
   final getCityName = TextEditingController();
   String cityName = 'Rajshahi';
+  dynamic currentDate, currentTime;
   //! my functions
   void _clearTextField() {
     setState(() {
@@ -35,11 +38,25 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void getCurrentDateTime() {
+    final now = DateTime.now();
+    currentTime = DateFormat.jm().format(DateTime.now());
+    currentDate = DateFormat('yMd').format(now);
+  }
+
+  void _loadCityWeather() {
+    setState(() {
+      cityName = getCityName.text;
+      weather = getCurrentWeather();
+      getCityName.clear();
+      getCurrentDateTime();
+    });
+  }
+
   // calling the openweathermap api...
   late Future<Map<String, dynamic>> weather = getCurrentWeather();
   Future<Map<String, dynamic>> getCurrentWeather() async {
     try {
-      String currentAPITempUnit = 'metric';
       final response = await http.get(
         Uri.parse(
           'https://api.openweathermap.org/data/2.5/forecast?q=$cityName&units=$currentAPITempUnit&APPID=$openWeatherAPIKey',
@@ -57,9 +74,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
-    // implement initState;
+    //! initState;
     super.initState();
     weather = getCurrentWeather();
+    getCurrentDateTime();
   }
 
   @override
@@ -87,12 +105,38 @@ class _HomeScreenState extends State<HomeScreen> {
                   () {
                     cityName = 'Rajshahi';
                     weather = getCurrentWeather();
+                    getCurrentDateTime();
                   },
                 );
               },
               icon: const Icon(Icons.refresh),
             ),
           ),
+          PopupMenuButton(
+            tooltip: 'Temperature Units',
+            onSelected: (value) {
+              setState(() {
+                if (value == 'metric') {
+                  currentAPITempUnit = 'metric';
+                  currentTempUnit = '°C';
+                } else if (value == 'imperial') {
+                  currentAPITempUnit = 'imperial';
+                  currentTempUnit = '°F';
+                }
+                weather = getCurrentWeather();
+              });
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'metric',
+                child: Text('Celsius'),
+              ),
+              const PopupMenuItem(
+                value: 'imperial',
+                child: Text('Fahrenheit'),
+              ),
+            ],
+          )
         ],
       ),
       body: FutureBuilder(
@@ -153,11 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           onSubmitted: (value) {
-                            setState(() {
-                              cityName = getCityName.text;
-                              weather = getCurrentWeather();
-                              getCityName.clear();
-                            });
+                            _loadCityWeather();
                           },
                           onChanged: (value) => setState(() {}),
                         ),
@@ -166,15 +206,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                         //! search button
                         child: IconButton(
-                          onPressed: () {
-                            if (getCityName.text.isNotEmpty) {
-                              setState(() {
-                                cityName = getCityName.text;
-                                weather = getCurrentWeather();
-                                getCityName.clear();
-                              });
-                            }
-                          },
+                          onPressed: getCityName.text.isNotEmpty
+                              ? _loadCityWeather
+                              : null,
                           style: TextButton.styleFrom(
                               fixedSize: const Size(80, 60),
                               backgroundColor: Colors.black,
@@ -208,18 +242,34 @@ class _HomeScreenState extends State<HomeScreen> {
                             padding: const EdgeInsets.all(16.0),
                             child: Column(
                               children: [
-                                Align(
-                                  alignment: Alignment.topLeft,
-                                  child: Text(
-                                    cityName.capFirstLetter(),
-                                    style: const TextStyle(
-                                      fontSize: 23,
-                                      fontWeight: FontWeight.bold,
+                                Row(
+                                  children: [
+                                    Align(
+                                      alignment: Alignment.topLeft,
+                                      child: Text(
+                                        cityName.capFirstLetter(),
+                                        style: const TextStyle(
+                                          fontSize: 23,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                    Expanded(
+                                      child: Align(
+                                        alignment: Alignment.topRight,
+                                        child: Text(
+                                          '\t\tData Last Updated\n$currentTime   $currentDate',
+                                          style: const TextStyle(
+                                            color: Colors.black,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  ],
                                 ),
                                 Text(
-                                  '$currentTemp °C',
+                                  '$currentTemp $currentTempUnit',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 35,
