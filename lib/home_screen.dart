@@ -14,9 +14,10 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+//! extension
 extension CapFirstLetter on String {
   String capFirstLetter() {
-    return this[0].toUpperCase() + substring(1);
+    return this[0].toUpperCase() + substring(1).toLowerCase();
   }
 }
 
@@ -24,8 +25,15 @@ class _HomeScreenState extends State<HomeScreen> {
   final border = OutlineInputBorder(
     borderRadius: BorderRadius.circular(10),
   );
+  // ! my variables
   final getCityName = TextEditingController();
   String cityName = 'Rajshahi';
+  //! my functions
+  void _clearTextField() {
+    setState(() {
+      getCityName.clear();
+    });
+  }
 
   // calling the openweathermap api...
   late Future<Map<String, dynamic>> weather = getCurrentWeather();
@@ -58,6 +66,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        // ! app title
         centerTitle: true,
         title: const Text(
           'Sky Sensor',
@@ -70,10 +79,13 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 0),
+            // ! refresh button
             child: IconButton(
+              tooltip: 'Load default area',
               onPressed: () {
                 setState(
                   () {
+                    cityName = 'Rajshahi';
                     weather = getCurrentWeather();
                   },
                 );
@@ -87,8 +99,12 @@ class _HomeScreenState extends State<HomeScreen> {
         future: weather,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
+            return Center(
+              child: CircularProgressIndicator(
+                color: Colors.black,
+                backgroundColor: Colors.grey[400],
+                strokeAlign: 4,
+              ),
             );
           }
           if (snapshot.hasError) {
@@ -111,6 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   // search bar
                   Row(
                     children: [
+                      // ! search bar
                       SizedBox(
                         width: 250,
                         child: TextField(
@@ -121,21 +138,40 @@ class _HomeScreenState extends State<HomeScreen> {
                             focusedBorder: border,
                             fillColor: Colors.white60,
                             prefixIcon: const Icon(Icons.location_on),
-                            hintText: 'Enter a City...',
+                            suffixIcon: getCityName.text.isNotEmpty
+                                ? IconButton(
+                                    onPressed: _clearTextField,
+                                    icon: const Icon(
+                                      Icons.clear,
+                                      size: 23,
+                                    ),
+                                  )
+                                : null,
+                            hintText: 'Search a City...',
                             hintStyle: const TextStyle(
                               color: Colors.black38,
                             ),
                           ),
+                          onSubmitted: (value) {
+                            setState(() {
+                              cityName = getCityName.text;
+                              weather = getCurrentWeather();
+                              getCityName.clear();
+                            });
+                          },
+                          onChanged: (value) => setState(() {}),
                         ),
                       ),
                       const SizedBox(width: 20),
                       Expanded(
+                        //! search button
                         child: IconButton(
                           onPressed: () {
                             if (getCityName.text.isNotEmpty) {
                               setState(() {
                                 cityName = getCityName.text;
                                 weather = getCurrentWeather();
+                                getCityName.clear();
                               });
                             }
                           },
@@ -156,7 +192,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 10),
 
-                  // main card
+                  //! main card
                   SizedBox(
                     width: double.infinity,
                     child: Card(
