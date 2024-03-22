@@ -6,6 +6,7 @@ import 'package:weather_app/addtional_info_item.dart';
 import 'package:weather_app/hourly_forecast_item.dart';
 import 'package:weather_app/secrets.dart';
 import 'package:http/http.dart' as http;
+import 'package:geolocator/geolocator.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,6 +21,12 @@ extension CapFirstLetter on String {
     return this[0].toUpperCase() + substring(1).toLowerCase();
   }
 }
+
+// ! get current location
+// Future<void> getCurrentLocation async (){
+//   LocationPermission permission =  await Geolocator.checkPermission();
+
+// }
 
 class _HomeScreenState extends State<HomeScreen> {
   final border = OutlineInputBorder(
@@ -38,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void getCurrentDateTime() {
+  void _getCurrentDateTime() {
     final now = DateTime.now();
     currentTime = DateFormat.jm().format(DateTime.now());
     currentDate = DateFormat('yMd').format(now);
@@ -47,15 +54,15 @@ class _HomeScreenState extends State<HomeScreen> {
   void _loadCityWeather() {
     setState(() {
       cityName = getCityName.text;
-      weather = getCurrentWeather();
+      weather = _getCurrentWeather();
       getCityName.clear();
-      getCurrentDateTime();
+      _getCurrentDateTime();
     });
   }
 
-  // calling the openweathermap api...
-  late Future<Map<String, dynamic>> weather = getCurrentWeather();
-  Future<Map<String, dynamic>> getCurrentWeather() async {
+  //! fetching data from openweathermap api...
+  late Future<Map<String, dynamic>> weather = _getCurrentWeather();
+  Future<Map<String, dynamic>> _getCurrentWeather() async {
     try {
       final response = await http.get(
         Uri.parse(
@@ -76,8 +83,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     //! initState;
     super.initState();
-    weather = getCurrentWeather();
-    getCurrentDateTime();
+    weather = _getCurrentWeather();
+    _getCurrentDateTime();
   }
 
   @override
@@ -104,8 +111,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 setState(
                   () {
                     cityName = 'Rajshahi';
-                    weather = getCurrentWeather();
-                    getCurrentDateTime();
+                    weather = _getCurrentWeather();
+                    _getCurrentDateTime();
                   },
                 );
               },
@@ -123,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   currentAPITempUnit = 'imperial';
                   currentTempUnit = '°F';
                 }
-                weather = getCurrentWeather();
+                weather = _getCurrentWeather();
               });
             },
             itemBuilder: (context) => [
@@ -154,6 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
           if (snapshot.hasError) {
             return Center(child: Text(snapshot.error.toString()));
           }
+          //! destructuring weather data...
           final data = snapshot.data!;
           final currentWeatherData = data['list'][0];
           final currentTemp = currentWeatherData['main']['temp'];
@@ -258,7 +266,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       child: Align(
                                         alignment: Alignment.topRight,
                                         child: Text(
-                                          '\t\tData Last Updated\n$currentTime   $currentDate',
+                                          'Last Updated\n$currentTime   $currentDate',
                                           style: const TextStyle(
                                             color: Colors.black,
                                             fontSize: 12,
@@ -298,7 +306,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(
                     height: 20,
                   ),
-                  // weather forecast card
+                  //! weather forecast card
                   const Text(
                     'Hourly Forecast',
                     style: TextStyle(
@@ -310,23 +318,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   SizedBox(
                     height: 120,
                     child: ListView.builder(
-                        itemCount: 10,
-                        scrollDirection: Axis.horizontal,
-                        itemBuilder: (context, index) {
-                          final hourlyForcast = data['list'][index + 1];
-                          final hourlySky =
-                              data['list'][index + 1]['weather'][0]['main'];
-                          data['list'][index + 1]['weather'][0]['main'];
-                          final hourlyTemp =
-                              hourlyForcast['main']['temp'].toString();
-                          final time = DateTime.parse(hourlyForcast['dt_txt']);
-                          return HourlyForcastItem(
-                              icon: hourlySky == 'Clouds' || hourlySky == 'Rain'
-                                  ? Icons.cloud
-                                  : Icons.sunny,
-                              time: DateFormat.jz().format(time),
-                              temperature: hourlyTemp);
-                        }),
+                      itemCount: 10,
+                      scrollDirection: Axis.horizontal,
+                      itemBuilder: (context, index) {
+                        final hourlyForcast = data['list'][index + 1];
+                        final hourlySky =
+                            data['list'][index + 1]['weather'][0]['main'];
+                        final hourlyTemp =
+                            hourlyForcast['main']['temp'].toString();
+                        final time = DateTime.parse(hourlyForcast['dt_txt']);
+                        return HourlyForcastItem(
+                          icon: hourlySky == 'Clouds' || hourlySky == 'Rain'
+                              ? Icons.cloud
+                              : Icons.sunny,
+                          time: DateFormat.jz().format(time),
+                          temperature: hourlyTemp,
+                        );
+                      },
+                    ),
                   ),
                   const SizedBox(
                     height: 20,
@@ -365,6 +374,15 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {},
+        tooltip: 'Get Current Location Weather',
+        backgroundColor: const Color.fromRGBO(255, 245, 240, 1),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(40),
+        ),
+        child: const Icon(Icons.location_searching_sharp),
       ),
     );
   }
